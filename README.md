@@ -161,6 +161,11 @@ Migrate database schema and seed the currency values with a single command:
 ```
 php artisan migrate --seed
 ```
+#### Get Currency Rates
+You can open `<URL>/rates` in your browser to trigger the `getRates` method in the `RateController` 
+that reads the rates from the RSS feed and saves them in the database. Or refer to the 
+[Task Scheduling](https://github.com/anatolijstarasovs/ecr#task-scheduling) section below for instructions
+on running a scheduled cron job.
 ## Maintenance
 - Run `php artisan down` to put the app into maintenance mode and `php artisan up` to bring it back up. 
 - Run `git pull` to get the latest changes from the repository.
