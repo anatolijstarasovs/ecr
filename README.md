@@ -1,78 +1,188 @@
-<p align="center"><img src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg" width="400"></p>
+# Euro Currency Rates (ECR)
+## Introduction
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+This is a small Laravel 6.x app that displays the latest euro currency rates pulled from the 
+[website](https://www.bank.lv/statistika/dati-statistika/valutu-kursi/aktualie) of the central bank of Latvia.
 
-## About Laravel
+It processes the [RSS feed](https://www.bank.lv/vk/ecb_rss.xml) to pull the latest euro currency rates. 
+The rates of the day are added to the feed after 17:00 EET (UTC/GMT+2) every day, except on weekends and the following holidays:
+New Year's Day (January 1), Good Friday, Easter Monday, Labour Day (May 1), and Christmas (December 25–26).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The output of the app is in Latvian.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+[Demo](https://ecr.anatolijstarasovs.lv)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Description
 
-## Learning Laravel
+- This is a PHP [Composer](https://getcomposer.org/) project based on [Laravel 6.x](https://laravel.com/docs/6.x).
+- There is one view `app.blade.php` that displays euro currency rates.
+- There is one custom controller `RateController.php` with two methods:
+<br>`getRates.php` used to fetch currency rates from the RSS feed and save them in the database.
+<br>`showRates.php` used to select the latest available rates from the database to display them using Laravel's pagination.
+- The routes to the controller are registered in the `routes/web.php` file.
+- The app is using the default [Bootstrap](https://getbootstrap.com) styling. The following commands had to be run to enable Bootstrap frontend scaffolding:
+```
+composer require laravel/ui --dev
+php artisan ui bootstrap
+```
+- Authentication related files, as well as most of the sample files that comes with a fresh Laravel installation have been left intact.
+### Database
+- The app can use either [MySQL](https://dev.mysql.com/downloads/mysql/) or [MariaDB](https://mariadb.org/) as a database.
+- The database schema consists of two tables:
+<br> `Currencies` stores currency names in Latvian mapped to their respective country codes.
+<br> `Rates` stores the currency rates pulled from the RSS feed of the central bank.
+The following commands were used to generate Eloquent models and respective migration files:
+```
+php artisan make:model Currency --migration
+php artisan make:model Rate --migration
+```
+- There are two database schema migration files:
+<br>`2019_12_19_212947_create_currencies_table.php`
+<br>`2019_12_19_213846_create_rates_table.php`
+- There is one custom seeder `CurrencyTableSeeder.php` used to populate the `Currencies`.
+<br>The following command must be run after adding custom seeder classes:
+```
+composer dump-autoload
+```
+## Installation
+Describes the installation process on Debian 10 with Apache as a web server. It assumes that you have a virtual server with `ssh` access available.
+### Prerequisites
+#### Apache
+[How to install the Apache Web Server on Debian 10](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-debian-10)
+<br><br>Make sure that the `DocumentRoot` of your virtual host includes the `public` folder because the main `index.php` file of the project resides in the `public` directory of the project.
+For example:
+```
+/var/www/ecr/public
+```
+Also make sure that `AllowOverride All` is set for the project's public folder. Otherwise, non-root routes won't resolve.
+```
+<Directory /var/www/ecr/public/>
+    Options Indexes FollowSymLinks
+    AllowOverride All
+    Require all granted
+</Directory>
+```
+Use [Let's Encrypt](https://letsencrypt.org/) and the [certbot](https://certbot.eff.org/) to add free TLS/SSL support.
+```
+sudo apt-get install certbot python-certbot-apache
+sudo certbot --apache
+```
+#### PHP
+Note that the server must meet the following [requirements](https://laravel.com/docs/6.x) for Laravel:
+- PHP >= 7.2.0
+- BCMath PHP Extension
+- Ctype PHP Extension
+- JSON PHP Extension
+- Mbstring PHP Extension
+- OpenSSL PHP Extension
+- PDO PHP Extension
+- Tokenizer PHP Extension
+- XML PHP Extension
+#### Composer
+The [official installation instructions](https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos).
+```
+sudo apt update
+sudo apt install curl php-cli php-mbstring git unzip
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+HASH="$(wget -q -O - https://composer.github.io/installer.sig)"
+php -r "if (hash_file('SHA384', 'composer-setup.php') === '$HASH') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+```
+#### Git and NodeJS
+```
+sudo apt update
+sudo apt install git
+sudo apt install nodejs npm
+```
+#### Database
+Install and configure either MariaDB or MySQL.
+[How to install MariaB on Debian 10](https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-debian-10).
+```
+sudo apt install mariadb-server
+sudo mysql_secure_installation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# Add a new password protected admin user to be used to connect to the database from the app:
+mysql
+GRANT ALL ON *.* TO 'admin'@'localhost' IDENTIFIED BY 'PASSWORD' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Useful commands:
+sudo systemctl status mariadb
+sudo systemctl start mariadb
+sudo mysqladmin version
+```
+Once installed and configured, create a new database:
+```
+CREATE DATABASE ecr CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+### Setup
+#### Clone Repository
+Clone this repository within the folder created to hold the project:
+```
+git clone https://github.com/anatolijstarasovs/ecr.git .
+```
+Directories within the `storage` and the `bootstrap/cache` directories should be writable by Apache or Laravel will not run. 
+You can change the ownership of these folders to Apache:
+```
+chown -R www-data:www-data storage
+chown -R www-data:www-data bootstrap/cache
+```
+#### Setup Environment
+There is a file called `.env.example` with configuration values. Copy the file as `.env` and fill in your database configuration parameters:
+```
+cp .env.example .env
+```
+Edit the file `nano .env` and make sure to set the following configuration parameters:
+```
+APP_URL=http://localhost
 
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
-- [Abdel Elrafa](https://abdelelrafa.com)
-- [Hyper Host](https://hyper.host)
-- [Appoly](https://www.appoly.co.uk)
-- [OP.GG](https://op.gg)
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=ecr
+DB_USERNAME=admin
+DB_PASSWORD=PASSWORD
+```
+#### Install JavaScript Dependencies
+```
+npm install
+```
+#### Install PHP Dependencies
+```
+composer install --optimize-autoloader --no-dev
+```
+#### Generate Application Key
+```
+php artisan key:generate
+```
+This command generates a random key which is automatically added to the `APP_KEY` variable in the `.env` configuration file.
+#### Setup Database
+Migrate database schema and seed the currency values with a single command:
+```
+php artisan migrate --seed
+```
+## Maintenance
+- Run `php artisan down` to put the app into maintenance mode and `php artisan up` to bring it back up. 
+- Run `git pull` to get the latest changes from the repository.
+- Run `composer install` to check for any changes in the `composer.lock` file.
+## Task Scheduling
+Within `App\Console\Kernel.php` there is a schedule with a call to pull the new currency rates at 17:30 EET every day:
+```
+$schedule->call('App\Http\Controllers\RateController@getRates')
+    ->timezone('Europe/Riga')
+    ->dailyAt('17:30');
+```
+`php artisan schedule:run` command can be used in the localhost to run the schedule. 
+<br> You can also add the following cron job on your server:
+```
+* * * * * php /var/www/ecr/artisan schedule:run >> /dev/null 2>&1
+```
+## Tasks
+- [ ] Cleanup. Remove default Laravel files that aren't required for this app.
+- [ ] Sorting
+- [ ] Flags
+- [ ] Date selection using a date picker
+- [ ] Tests
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Licensed under the [MIT license](https://opensource.org/licenses/MIT).

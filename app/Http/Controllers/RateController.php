@@ -26,7 +26,7 @@ class RateController extends Controller
             $rate_date = date('Y-m-d H:i:s', strtotime($item->pubDate));
             $rates = explode(' ', trim($item->description));
 
-            // Store currency rates for the day only once.
+            // Store currency rates if there are no records for this day.
             if (DB::table('rates')->whereDate('rate_date', '=', date('Y-m-d', strtotime($rate_date)))->doesntExist()) {
                 for ($i = 0; $i < count($rates); $i++) {
                     $rate = new Rate;
@@ -48,20 +48,17 @@ class RateController extends Controller
      */
     function showRates()
     {
-        $date = date('Y-m-d', time());
-
-        // Fetch yesterday's rates if there are no rates available for today.
-        if (DB::table('rates')->whereDate('rate_date', '=', $date)->doesntExist()) {
-            $date = date('Y-m-d', time() - 24 * 60 * 60);
-        }
+        // Select the latest available rate date to show the rates for.
+        $date = DB::table('rates')
+            ->select('rates.rate_date')->orderBy('rate_date', 'desc')->first()->rate_date;
 
         $rates = DB::table('rates')
             ->select('currencies.currency', 'rates.code', 'rates.rate')
             ->join('currencies', 'rates.code', '=', 'currencies.code')
-            ->whereDate('rates.rate_date', '=', $date)
+            ->whereDate('rates.rate_date', '=', date('Y-m-d', strtotime($date)))
             ->orderBy('currencies.currency')
             ->paginate(10);
 
-        return view('rates', ['rates' => $rates, 'date' => date('d.m.Y', strtotime($date))]);
+        return view('app', ['rates' => $rates, 'date' => date('d.m.Y', strtotime($date))]);
     }
 }

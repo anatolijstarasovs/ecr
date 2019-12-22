@@ -35,7 +35,7 @@
                 @endforeach
             @else
                 <tr>
-                    <td colspan="3">Šīs dienas kursi vēl nav pieejami</td>
+                    <td colspan="3">Valūtas kursi vēl nav pieejami.</td>
                 </tr>
             @endif
             </tbody>
